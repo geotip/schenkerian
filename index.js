@@ -92,13 +92,14 @@ function analyze(body, pr) {
     var totalWords = splitContent.length
     var keywords = compileKeywords(graph, map).splice(0, 30)
     var multiplier = (pr == 10 ? 2 : Number('1.' + pr)) - 0.5
-    keywords = keywordsAndScores(keywords, totalWords, multiplier)
+    keywords = keywordsAndScores(keywords, totalWords, multiplier, content)
 
     return {
       totalWords: totalWords,
       title: things.title.replace(RE_BAD_TITLES, '').replace(RE_AMPS, '&'),
       image: things.image,
-      relevance: keywords
+      relevance: keywords,
+      content: content
     }
   })
 }
@@ -165,10 +166,10 @@ function cleanBody(body) {
     cornet.select('body', selectBodySuccess.bind(null, resolve, reject))
   }).timeout(1000, 'Timed out trying to get body element')
 }
-
+var content = ''
 function selectBodySuccess(resolve, reject, parsedBody) {
     try {
-      var content = cheerio(parsedBody).text().replace(RE_ALPHA_NUM, ' ')
+      content = cheerio(parsedBody).text().replace(RE_ALPHA_NUM, ' ')
       resolve(
         content.split(' ').map(function lowerCaseAndTrim(word) {
           return word.toLowerCase().replace(/[\d'"”<>\/]/g, ' ').trim()
@@ -196,7 +197,7 @@ function compileKeywords(graph, map) {
   })
 }
 
-function keywordsAndScores(keywords, totalWords, multiplier) {
+function keywordsAndScores(keywords, totalWords, multiplier, content) {
   return keywords.map(function getWordScores(el, i, ar) {
     var first = ar[0].count
     var phraseLen = Math.max(1, el.word.split(' ').length * 0.68)
